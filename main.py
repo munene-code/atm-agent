@@ -1,4 +1,5 @@
 import os
+import json
 import httpx
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -27,10 +28,16 @@ async def root():
 @app.post("/webhook")
 async def webhook(request: Request):
     raw = await request.body()
-    text = raw.decode("utf-8").replace("\\n", "\n")
+    text = raw.decode("utf-8")
 
-    if text:
-        await send_telegram(CHAT_ID_PUBLIC, text)
-        await send_telegram(CHAT_ID_PREMIUM, text)
+    try:
+        data = json.loads(text)
+        message = data.get("text", text)
+    except:
+        message = text
+
+    if message:
+        await send_telegram(CHAT_ID_PUBLIC, message)
+        await send_telegram(CHAT_ID_PREMIUM, message)
 
     return JSONResponse({"status": "ok"})
